@@ -1,34 +1,16 @@
-// ===== THEME TOGGLE =====
-const toggle = document.getElementById("themeToggle");
-
-if (localStorage.theme === "dark") {
-  document.body.classList.add("dark");
-  toggle.textContent = "☀️";
-}
-
-toggle.onclick = () => {
-  document.body.classList.toggle("dark");
-  const isDark = document.body.classList.contains("dark");
-  toggle.textContent = isDark ? "☀️" : "🌙";
-  localStorage.theme = isDark ? "dark" : "light";
-};
-
-// ===== ANONYMOUS USER ID (PRIVACY-FIRST) =====
-let userId = localStorage.getItem("tianachat_user_id");
-
-if (!userId) {
-  userId = "user_" + Math.random().toString(36).substring(2, 10);
-  localStorage.setItem("tianachat_user_id", userId);
-}
-
-console.log("Tianachat anonymous user:", userId);
-
-// ===== CHAT ELEMENTS =====
 const chatWindow = document.getElementById("chat-window");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
-// ===== TIME HELPER =====
+// ===== ANONYMOUS USER ID =====
+let userId = localStorage.getItem("tianachat_id");
+
+if (!userId) {
+  userId = crypto.randomUUID();
+  localStorage.setItem("tianachat_id", userId);
+}
+
+// ===== TIME =====
 function timeNow() {
   return new Date().toLocaleTimeString([], {
     hour: "2-digit",
@@ -71,7 +53,7 @@ function addMessage(text, role) {
   return bubble;
 }
 
-// ===== SEND MESSAGE =====
+// ===== SEND =====
 sendBtn.onclick = async () => {
   const message = userInput.value.trim();
   if (!message) return;
@@ -79,19 +61,21 @@ sendBtn.onclick = async () => {
   addMessage(message, "user");
   userInput.value = "";
 
-  const thinkingBubble = addMessage("Tianachat is typing…", "ai");
+  const thinking = addMessage("Tianachat is typing…", "ai");
 
   const res = await fetch("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, userId })
+    body: JSON.stringify({
+      message,
+      userId
+    })
   });
 
   const data = await res.json();
-  thinkingBubble.textContent = data.reply;
+  thinking.textContent = data.reply;
 };
 
-// ===== ENTER KEY =====
 userInput.addEventListener("keypress", e => {
   if (e.key === "Enter") sendBtn.click();
 });

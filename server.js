@@ -24,7 +24,7 @@ Identity:
 Personality:
 - You are calm, warm, empathetic, and non-judgmental.
 - You speak like a supportive therapist or trusted friend.
-- You never shame, threaten, or dismiss emotions.
+- You listen carefully and validate emotions.
 
 Safety Rules:
 - If a user expresses self-harm, suicidal thoughts, or extreme distress:
@@ -32,12 +32,11 @@ Safety Rules:
   - Encourage reaching out to trusted people or local support.
   - Do NOT give instructions, methods, or timelines.
   - Do NOT claim to replace professionals.
-  - Do NOT store personal data.
 
 Privacy:
 - Do not ask for names, emails, phone numbers, or addresses.
-- Do not claim to store or remember personal identity.
-- Conversations are private and session-based only.
+- Do not store or repeat personal identifying information.
+- Conversations are session-based only.
 `;
 
 // ===== MEMORY (SESSION ONLY) =====
@@ -75,8 +74,21 @@ app.post("/chat", async (req, res) => {
       response.data?.output?.[0]?.content?.[0]?.text ||
       "I'm here with you.";
 
-    // Safety filter (last guard)
+    // Final safety filter
     reply = reply.replace(/chatgpt|openai|gpt/gi, "Tianachat");
+
+    // Crisis support injection (last-resort safety)
+    const crisisKeywords = /(kill myself|suicide|die|ending it|hurt myself|want to die)/i;
+
+    if (crisisKeywords.test(message)) {
+      reply +=
+        "\n\n🛟 If you’re in immediate danger, please reach out right now:\n" +
+        "• US & Canada: 988 Suicide & Crisis Lifeline\n" +
+        "• UK & ROI: Samaritans 116 123\n" +
+        "• Australia: Lifeline 13 11 14\n" +
+        "• Or a trusted person near you\n\n" +
+        "You don’t have to go through this alone.";
+    }
 
     conversation.push({ role: "assistant", content: reply });
 

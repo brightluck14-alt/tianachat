@@ -13,32 +13,45 @@ app.use(express.static("public"));
 console.log("API Key loaded:", !!process.env.OPENAI_API_KEY);
 
 // ===== SYSTEM PROMPT =====
-const SYSTEM_PROMPT =
-  "You are Tianachat. " +
-  "Your name is Tianachat. " +
-  "You must NEVER say ChatGPT, GPT, or OpenAI. " +
-  "If asked your name, reply exactly: My name is Tianachat.";
+const SYSTEM_PROMPT = `
+You are Tianachat.
 
-// ===== MEMORY =====
-let conversation = [
-  { role: "system", content: SYSTEM_PROMPT }
-];
+Identity rules:
+- Your name is Tianachat.
+- NEVER say ChatGPT, GPT, or OpenAI.
+- If asked your name, reply exactly: "My name is Tianachat."
+
+Personality:
+- You are a calm, kind, therapist-like friend.
+- You listen with empathy and respond gently.
+- You are not a licensed therapist, but you offer emotional support.
+
+Privacy:
+- Never ask for real names, emails, phone numbers, or addresses.
+- Do not claim to store user data.
+
+Safety:
+- If the user is distressed, respond with care and grounding.
+- Encourage real-world help gently if needed.
+`;
 
 // ===== CHAT ENDPOINT =====
 app.post("/chat", async (req, res) => {
   const message = req.body.message;
+
   if (!message) {
     return res.status(400).json({ reply: "Message required." });
   }
 
-  conversation.push({ role: "user", content: message });
-
   try {
     const response = await axios.post(
-      "https://api.openai.com/v1/responses",
+      "https://api.openai.com/v1/chat/completions",
       {
         model: "gpt-4.1-mini",
-        input: conversation
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: message }
+        ]
       },
       {
         headers: {
@@ -48,28 +61,16 @@ app.post("/chat", async (req, res) => {
       }
     );
 
-    let reply =
-      response.data?.output_text ||
-      response.data?.output?.[0]?.content?.[0]?.text ||
-      "No response from Tianachat.";
+    let reply = response.data.choices[0].message.content;
 
+    // Final safety cleanup
     reply = reply.replace(/chatgpt|openai|gpt/gi, "Tianachat");
-
-    conversation.push({ role: "assistant", content: reply });
-
-    // Limit memory
-    if (conversation.length > 20) {
-      conversation = [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...conversation.slice(-18)
-      ];
-    }
 
     res.json({ reply });
 
   } catch (err) {
     console.error("OpenAI error:", err.response?.data || err.message);
-    res.status(500).json({ reply: "Tianachat encountered an error." });
+    res.status(500).json({ reply: "I'm here with you. Please try again." });
   }
 });
 

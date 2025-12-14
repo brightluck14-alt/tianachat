@@ -2,6 +2,13 @@ const chatWindow = document.getElementById("chat-window");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
+// ===== SESSION ID (ANONYMOUS) =====
+let sessionId = localStorage.getItem("tianachat_session");
+if (!sessionId) {
+  sessionId = crypto.randomUUID();
+  localStorage.setItem("tianachat_session", sessionId);
+}
+
 function timeNow() {
   return new Date().toLocaleTimeString([], {
     hour: "2-digit",
@@ -50,7 +57,6 @@ sendBtn.onclick = async () => {
   addMessage(message, "user");
   userInput.value = "";
 
-  // ⏳ Delay before typing indicator (human-like)
   let typingBubble;
   setTimeout(() => {
     typingBubble = addMessage("Tianachat is typing…", "ai");
@@ -59,12 +65,11 @@ sendBtn.onclick = async () => {
   const res = await fetch("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message })
+    body: JSON.stringify({ message, sessionId })
   });
 
   const data = await res.json();
 
-  // Replace typing text with real reply
   setTimeout(() => {
     if (typingBubble) {
       typingBubble.textContent = data.reply;

@@ -2,28 +2,39 @@ const chatWindow = document.getElementById("chat-window");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
-function addMessage(text, className) {
+function addMessage(text, cls) {
   const div = document.createElement("div");
-  div.className = `bubble ${className}`;
+  div.className = `bubble ${cls}`;
   div.textContent = text;
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-async function sendMessage() {
+// Typing animation
+function showTyping() {
+  const div = document.createElement("div");
+  div.className = "typing";
+  div.id = "typing-indicator";
+  div.textContent = "Tianachat is typing";
+  chatWindow.appendChild(div);
+
+  let dots = 0;
+  const interval = setInterval(() => {
+    dots = (dots + 1) % 4;
+    div.textContent = "Tianachat is typing" + ".".repeat(dots);
+  }, 500);
+
+  return interval;
+}
+
+sendBtn.onclick = async () => {
   const message = userInput.value.trim();
   if (!message) return;
 
-  // User message
   addMessage(message, "user");
   userInput.value = "";
 
-  // Typing indicator
-  const typingDiv = document.createElement("div");
-  typingDiv.className = "typing";
-  typingDiv.textContent = "Tianachat is typing...";
-  chatWindow.appendChild(typingDiv);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+  const typingInterval = showTyping();
 
   try {
     const res = await fetch("/chat", {
@@ -34,20 +45,17 @@ async function sendMessage() {
 
     const data = await res.json();
 
-    // Remove typing indicator
-    typingDiv.remove();
+    clearInterval(typingInterval);
+    document.getElementById("typing-indicator")?.remove();
 
-    // AI message
     addMessage(data.reply, "ai");
-
   } catch (err) {
-    typingDiv.textContent = "Tianachat is unavailable.";
-    console.error(err);
+    clearInterval(typingInterval);
+    document.getElementById("typing-indicator")?.remove();
+    addMessage("Tianachat encountered an error.", "ai");
   }
-}
+};
 
-sendBtn.addEventListener("click", sendMessage);
-
-userInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") sendMessage();
+userInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") sendBtn.click();
 });

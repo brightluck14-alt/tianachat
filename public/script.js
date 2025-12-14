@@ -1,3 +1,17 @@
+const toggle = document.getElementById("themeToggle");
+
+if (localStorage.theme === "dark") {
+  document.body.classList.add("dark");
+  toggle.textContent = "☀️";
+}
+
+toggle.onclick = () => {
+  document.body.classList.toggle("dark");
+  const isDark = document.body.classList.contains("dark");
+  toggle.textContent = isDark ? "☀️" : "🌙";
+  localStorage.theme = isDark ? "dark" : "light";
+};
+
 const chatWindow = document.getElementById("chat-window");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");

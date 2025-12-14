@@ -2,39 +2,28 @@ const chatWindow = document.getElementById("chat-window");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
-function addMessage(text, cls) {
+function addMessage(text, type) {
   const div = document.createElement("div");
-  div.className = `bubble ${cls}`;
+  div.className = `bubble ${type}`; // ✅ IMPORTANT FIX
   div.textContent = text;
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
-}
-
-// Typing animation
-function showTyping() {
-  const div = document.createElement("div");
-  div.className = "typing";
-  div.id = "typing-indicator";
-  div.textContent = "Tianachat is typing";
-  chatWindow.appendChild(div);
-
-  let dots = 0;
-  const interval = setInterval(() => {
-    dots = (dots + 1) % 4;
-    div.textContent = "Tianachat is typing" + ".".repeat(dots);
-  }, 500);
-
-  return interval;
 }
 
 sendBtn.onclick = async () => {
   const message = userInput.value.trim();
   if (!message) return;
 
+  // User message
   addMessage(message, "user");
   userInput.value = "";
 
-  const typingInterval = showTyping();
+  // Typing indicator
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "typing";
+  typingDiv.textContent = "Tianachat is typing...";
+  chatWindow.appendChild(typingDiv);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 
   try {
     const res = await fetch("/chat", {
@@ -45,13 +34,11 @@ sendBtn.onclick = async () => {
 
     const data = await res.json();
 
-    clearInterval(typingInterval);
-    document.getElementById("typing-indicator")?.remove();
-
+    typingDiv.remove();
     addMessage(data.reply, "ai");
+
   } catch (err) {
-    clearInterval(typingInterval);
-    document.getElementById("typing-indicator")?.remove();
+    typingDiv.remove();
     addMessage("Tianachat encountered an error.", "ai");
   }
 };

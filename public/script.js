@@ -2,13 +2,16 @@ const chatWindow = document.getElementById("chat-window");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
-// ===== SESSION ID (ANONYMOUS) =====
-let sessionId = localStorage.getItem("tianachat_session");
-if (!sessionId) {
-  sessionId = crypto.randomUUID();
-  localStorage.setItem("tianachat_session", sessionId);
-}
+// ===== GREETING ON LOAD =====
+window.onload = () => {
+  addMessage(
+    "Hello there 👋 I’m Tianachat. I’m here to listen and support you. What’s been on your mind today?",
+    "ai"
+  );
+  userInput.focus();
+};
 
+// ===== TIME =====
 function timeNow() {
   return new Date().toLocaleTimeString([], {
     hour: "2-digit",
@@ -16,6 +19,7 @@ function timeNow() {
   });
 }
 
+// ===== ADD MESSAGE =====
 function addMessage(text, role) {
   const msg = document.createElement("div");
   msg.className = `message ${role}`;
@@ -50,6 +54,7 @@ function addMessage(text, role) {
   return bubble;
 }
 
+// ===== SEND MESSAGE =====
 sendBtn.onclick = async () => {
   const message = userInput.value.trim();
   if (!message) return;
@@ -57,28 +62,39 @@ sendBtn.onclick = async () => {
   addMessage(message, "user");
   userInput.value = "";
 
-  let typingBubble;
+  // Delay typing indicator (more human)
+  let thinkingBubble;
   setTimeout(() => {
-    typingBubble = addMessage("Tianachat is typing…", "ai");
-  }, 700);
+    thinkingBubble = addMessage("Tianachat is typing…", "ai");
+  }, 400);
 
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, sessionId })
-  });
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  setTimeout(() => {
-    if (typingBubble) {
-      typingBubble.textContent = data.reply;
-    } else {
-      addMessage(data.reply, "ai");
-    }
-  }, 900);
+    setTimeout(() => {
+      if (thinkingBubble) {
+        thinkingBubble.textContent = data.reply;
+      } else {
+        addMessage(data.reply, "ai");
+      }
+      userInput.focus();
+    }, 700);
+
+  } catch (err) {
+    addMessage(
+      "I’m here with you, but something went wrong. Please try again.",
+      "ai"
+    );
+  }
 };
 
+// ===== ENTER KEY =====
 userInput.addEventListener("keypress", e => {
   if (e.key === "Enter") sendBtn.click();
 });

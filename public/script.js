@@ -2,36 +2,52 @@ const chatWindow = document.getElementById("chat-window");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 
-function addMessage(text, cls) {
+function addMessage(text, className) {
   const div = document.createElement("div");
-  div.className = cls;
+  div.className = `bubble ${className}`;
   div.textContent = text;
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-sendBtn.onclick = async () => {
+async function sendMessage() {
   const message = userInput.value.trim();
   if (!message) return;
 
+  // User message
   addMessage(message, "user");
   userInput.value = "";
 
-  const aiDiv = document.createElement("div");
-  aiDiv.className = "ai";
-  aiDiv.textContent = "Tianachat is thinking...";
-  chatWindow.appendChild(aiDiv);
+  // Typing indicator
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "typing";
+  typingDiv.textContent = "Tianachat is typing...";
+  chatWindow.appendChild(typingDiv);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message })
-  });
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
 
-  const data = await res.json();
-  aiDiv.textContent = data.reply;
-};
+    const data = await res.json();
 
-userInput.addEventListener("keypress", e => {
-  if (e.key === "Enter") sendBtn.click();
+    // Remove typing indicator
+    typingDiv.remove();
+
+    // AI message
+    addMessage(data.reply, "ai");
+
+  } catch (err) {
+    typingDiv.textContent = "Tianachat is unavailable.";
+    console.error(err);
+  }
+}
+
+sendBtn.addEventListener("click", sendMessage);
+
+userInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendMessage();
 });

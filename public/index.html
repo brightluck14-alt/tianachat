@@ -1,145 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Tianachat</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tianachat</title>
 
-<style>
-:root {
-  --bg: #eef1f5;
-  --card: #ffffff;
-  --header: #4f46e5;
-  --user: #4f46e5;
-  --ai: #e5e7eb;
-  --text: #111827;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-body.dark {
-  --bg: #0f172a;
-  --card: #020617;
-  --header: #020617;
-  --user: #4f46e5;
-  --ai: #1e293b;
-  --text: #e5e7eb;
-}
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #eef1f5;
+      height: 100vh;
+      width: 100vw;
+    }
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  color: var(--text);
-}
+    .chat-app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      background: #ffffff;
+    }
 
-.chat-app {
-  width: 420px;
-  height: 600px;
-  background: var(--card);
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
+    /* HEADER */
+    .chat-header {
+      background: #4f46e5;
+      color: white;
+      padding: 16px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
 
-.chat-header {
-  background: var(--header);
-  color: white;
-  padding: 14px;
-  text-align: center;
-  font-size: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    /* CHAT WINDOW */
+    .chat-window {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      background: #f9fafb;
+    }
 
-.toggle {
-  cursor: pointer;
-  font-size: 16px;
-}
+    /* MESSAGE WRAPPER */
+    .message {
+      display: flex;
+      margin-bottom: 14px;
+      align-items: flex-end;
+    }
 
-.chat-window {
-  flex: 1;
-  padding: 15px;
-  overflow-y: auto;
-}
+    .message.user {
+      justify-content: flex-end;
+    }
 
-.message {
-  display: flex;
-  margin-bottom: 18px;
-}
+    .message.ai {
+      justify-content: flex-start;
+    }
 
-.message.user { justify-content: flex-end; }
-.message.ai { justify-content: flex-start; }
+    /* AVATAR */
+    .avatar {
+      font-size: 20px;
+      margin: 0 6px;
+    }
 
-.avatar { margin: 0 6px; }
+    /* BUBBLE */
+    .bubble {
+      max-width: 75%;
+      padding: 12px 14px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.45;
+      word-wrap: break-word;
+    }
 
-.bubble {
-  max-width: 70%;
-  padding: 10px 14px;
-  border-radius: 18px;
-}
+    .user .bubble {
+      background: #4f46e5;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
 
-.user .bubble {
-  background: var(--user);
-  color: white;
-  border-bottom-right-radius: 4px;
-}
+    .ai .bubble {
+      background: #e5e7eb;
+      color: #111827;
+      border-bottom-left-radius: 4px;
+    }
 
-.ai .bubble {
-  background: var(--ai);
-  border-bottom-left-radius: 4px;
-}
+    /* TIME */
+    .time {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+      text-align: right;
+    }
 
-.time {
-  font-size: 11px;
-  opacity: 0.6;
-  margin-top: 4px;
-}
+    /* INPUT BAR */
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background: #ffffff;
+      position: sticky;
+      bottom: 0;
+    }
 
-.chat-input {
-  display: flex;
-  padding: 10px;
-  border-top: 1px solid #334155;
-}
+    .chat-input input {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
 
-.chat-input input {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-}
+    .chat-input button {
+      margin-left: 8px;
+      padding: 12px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 20px;
+      background: #4f46e5;
+      color: white;
+      cursor: pointer;
+    }
 
-.chat-input button {
-  margin-left: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  background: var(--user);
-  color: white;
-  cursor: pointer;
-}
-</style>
+    .chat-input button:active {
+      transform: scale(0.97);
+    }
+
+    /* DESKTOP WIDTH LIMIT */
+    @media (min-width: 768px) {
+      .chat-app {
+        max-width: 480px;
+        margin: 0 auto;
+        border-left: 1px solid #ddd;
+        border-right: 1px solid #ddd;
+      }
+    }
+  </style>
 </head>
 
 <body>
-<div class="chat-app">
-  <div class="chat-header">
-    <span>Tianachat</span>
-    <span class="toggle" id="themeToggle">🌙</span>
+  <div class="chat-app">
+    <div class="chat-header">Tianachat</div>
+
+    <div id="chat-window" class="chat-window"></div>
+
+    <div class="chat-input">
+      <input
+        id="user-input"
+        type="text"
+        placeholder="Message Tianachat…"
+        autocomplete="off"
+      />
+      <button id="send-btn">Send</button>
+    </div>
   </div>
 
-  <div id="chat-window" class="chat-window"></div>
-
-  <div class="chat-input">
-    <input id="user-input" placeholder="Message Tianachat..." />
-    <button id="send-btn">Send</button>
-  </div>
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

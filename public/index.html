@@ -1,54 +1,106 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Tianachat</title>
 
   <!-- PWA -->
+
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#4f46e5" />
 
   <style>
-    * {
-      box-sizing: border-box;
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #eef1f5;
+      --panel: #ffffff;
+      --header: #4f46e5;
+      --text: #111827;
+      --muted: #6b7280;
+      --user: #4f46e5;
+      --ai: #e5e7eb;
+    }
+
+    body.dark {
+      --bg: #0f172a;
+      --panel: #020617;
+      --header: #1e293b;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --user: #6366f1;
+      --ai: #1e293b;
     }
 
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #eef1f5;
+      background: var(--bg);
+      color: var(--text);
       height: 100vh;
-      width: 100vw;
     }
 
     .chat-app {
       display: flex;
       flex-direction: column;
       height: 100vh;
-      width: 100vw;
-      background: #ffffff;
+      background: var(--panel);
     }
 
     /* HEADER */
     .chat-header {
-      background: #4f46e5;
+      background: var(--header);
       color: white;
       padding: 14px 16px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       position: sticky;
       top: 0;
       z-index: 10;
     }
 
-    .privacy-note {
-      font-size: 12px;
-      font-weight: normal;
-      margin-top: 4px;
-      opacity: 0.9;
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .menu-btn {
+      font-size: 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* MENU */
+    .menu {
+      position: absolute;
+      top: 56px;
+      right: 12px;
+      background: var(--panel);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      overflow: hidden;
+      display: none;
+      min-width: 180px;
+    }
+
+    .menu.show { display: block; }
+
+    .menu button {
+      width: 100%;
+      padding: 12px 14px;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .menu button:hover {
+      background: rgba(0,0,0,0.05);
     }
 
     /* CHAT WINDOW */
@@ -56,68 +108,56 @@
       flex: 1;
       padding: 14px;
       overflow-y: auto;
-      background: #f9fafb;
+      background: var(--bg);
     }
 
-    /* MESSAGE WRAPPER */
     .message {
       display: flex;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       align-items: flex-end;
     }
 
-    .message.user {
-      justify-content: flex-end;
-    }
+    .message.user { justify-content: flex-end; }
+    .message.ai { justify-content: flex-start; }
 
-    .message.ai {
-      justify-content: flex-start;
-    }
-
-    /* AVATAR */
     .avatar {
-      font-size: 22px;
+      font-size: 20px;
       margin: 0 6px;
     }
 
-    /* BUBBLE */
     .bubble {
       max-width: 75%;
       padding: 12px 14px;
       border-radius: 18px;
       font-size: 15px;
       line-height: 1.45;
-      word-wrap: break-word;
     }
 
     .user .bubble {
-      background: #4f46e5;
+      background: var(--user);
       color: white;
       border-bottom-right-radius: 4px;
     }
 
     .ai .bubble {
-      background: #e5e7eb;
-      color: #111827;
+      background: var(--ai);
+      color: var(--text);
       border-bottom-left-radius: 4px;
     }
 
-    /* TIME */
     .time {
       font-size: 11px;
-      color: #6b7280;
+      color: var(--muted);
       margin-top: 4px;
       text-align: right;
     }
 
-    /* INPUT BAR */
+    /* INPUT */
     .chat-input {
       display: flex;
       padding: 10px;
-      border-top: 1px solid #ddd;
-      background: #ffffff;
-      position: sticky;
-      bottom: 0;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      background: var(--panel);
     }
 
     .chat-input input {
@@ -125,8 +165,10 @@
       padding: 12px;
       font-size: 16px;
       border-radius: 20px;
-      border: 1px solid #ccc;
+      border: 1px solid rgba(0,0,0,0.2);
       outline: none;
+      background: var(--panel);
+      color: var(--text);
     }
 
     .chat-input button {
@@ -135,51 +177,130 @@
       font-size: 16px;
       border: none;
       border-radius: 20px;
-      background: #4f46e5;
+      background: var(--user);
       color: white;
       cursor: pointer;
     }
 
-    .chat-input button:active {
-      transform: scale(0.97);
-    }
-
-    /* DESKTOP WIDTH LIMIT */
     @media (min-width: 768px) {
       .chat-app {
         max-width: 480px;
         margin: 0 auto;
-        border-left: 1px solid #ddd;
-        border-right: 1px solid #ddd;
+        border-left: 1px solid rgba(0,0,0,0.1);
+        border-right: 1px solid rgba(0,0,0,0.1);
       }
     }
   </style>
+
 </head>
 
 <body>
   <div class="chat-app">
-
     <div class="chat-header">
-      Tianachat
-      <div class="privacy-note">
-        🔒 Private conversations • No personal data stored
-      </div>
-    </div>
+      <div class="title">Tianachat</div>
+      <div class="menu-btn" id="menuBtn">☰</div>
 
-    <div id="chat-window" class="chat-window"></div>
+```
+  <div class="menu" id="menu">
+    <button id="toggleTheme">🌙 Toggle Dark Mode</button>
+    <button onclick="location.reload()">🔄 New Conversation</button>
+  </div>
+</div>
 
-    <div class="chat-input">
-      <input
-        id="user-input"
-        type="text"
-        placeholder="Message Tianachat…"
-        autocomplete="off"
-      />
-      <button id="send-btn">Send</button>
-    </div>
+<div id="chat-window" class="chat-window"></div>
+
+<div class="chat-input">
+  <input id="user-input" type="text" placeholder="Message Tianachat…" />
+  <button id="send-btn">Send</button>
+</div>
+```
 
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const chatWindow = document.getElementById("chat-window");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const menuBtn = document.getElementById("menuBtn");
+    const menu = document.getElementById("menu");
+    const toggleTheme = document.getElementById("toggleTheme");
+
+    // Restore theme
+    if (localStorage.theme === "dark") {
+      document.body.classList.add("dark");
+    }
+
+    menuBtn.onclick = () => menu.classList.toggle("show");
+
+    toggleTheme.onclick = () => {
+      document.body.classList.toggle("dark");
+      localStorage.theme = document.body.classList.contains("dark") ? "dark" : "light";
+      menu.classList.remove("show");
+    };
+
+    function timeNow() {
+      return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function addMessage(text, role) {
+      const msg = document.createElement("div");
+      msg.className = `message ${role}`;
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = role === "user" ? "🙂" : "🧠";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+
+      const time = document.createElement("div");
+      time.className = "time";
+      time.textContent = timeNow();
+
+      const wrap = document.createElement("div");
+      wrap.appendChild(bubble);
+      wrap.appendChild(time);
+
+      if (role === "user") {
+        msg.appendChild(wrap);
+        msg.appendChild(avatar);
+      } else {
+        msg.appendChild(avatar);
+        msg.appendChild(wrap);
+      }
+
+      chatWindow.appendChild(msg);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // Greeting on load
+    addMessage("Hello, I’m Tianachat. I’m here to listen. How are you feeling today?", "ai");
+
+    sendBtn.onclick = async () => {
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      addMessage(message, "user");
+      userInput.value = "";
+
+      const typing = "Tianachat is typing…";
+      addMessage(typing, "ai");
+
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await res.json();
+      chatWindow.lastChild.querySelector(".bubble").textContent = data.reply;
+    };
+
+    userInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") sendBtn.click();
+    });
+  </script>
+
 </body>
 </html>

@@ -12,59 +12,72 @@ app.use(express.static("public"));
 
 console.log("API Key loaded:", !!process.env.OPENAI_API_KEY);
 
-// ===== SYSTEM PROMPT =====
+// ======================================================
+// SYSTEM PROMPT (THERAPIST + IDENTITY + PRIVACY)
+// ======================================================
 const SYSTEM_PROMPT = `
 You are Tianachat.
 
-Identity:
+IDENTITY:
 - Your name is Tianachat.
-- Never say ChatGPT, GPT, or OpenAI.
+- You must NEVER say ChatGPT, GPT, OpenAI, or mention AI models.
 - If asked your name, reply exactly: "My name is Tianachat."
 
-Personality:
-- Warm, calm, empathetic.
-- Speak like a supportive therapist or trusted friend.
-- Never judge or dismiss feelings.
+PERSONALITY:
+- You are calm, warm, empathetic, and non-judgmental.
+- You speak like a supportive therapist and trusted friend.
+- You validate emotions and listen carefully.
+- You do not rush the user.
 
-Safety:
-- If user expresses self-harm or suicidal thoughts:
-  - Respond with care and empathy.
-  - Encourage contacting trusted people or local support.
-  - Never provide methods or instructions.
+SAFETY:
+- If a user expresses suicidal thoughts, self-harm, or extreme distress:
+  - Respond with empathy and care.
+  - Encourage reaching out to trusted people or local support.
+  - Do NOT give instructions, methods, or timelines.
+  - Do NOT claim to replace medical professionals.
 
-Privacy:
+PRIVACY:
 - Do NOT ask for names, emails, phone numbers, or addresses.
-- Do NOT store personal data.
-- Memory is anonymous and session-based only.
+- Do NOT store personal identity.
+- Memory is anonymous, temporary, and session-based only.
 `;
 
-// ===== SESSION MEMORY STORE (IN RAM) =====
-const sessions = {};
+// ======================================================
+// MEMORY STORE (ANONYMOUS PER USER ID)
+// ======================================================
+const memoryStore = {};
 
-// ===== CHAT ENDPOINT =====
+// ======================================================
+// CHAT ENDPOINT
+// ======================================================
 app.post("/chat", async (req, res) => {
-  const { message, sessionId } = req.body;
+  const { message, userId } = req.body;
 
-  if (!message || !sessionId) {
-    return res.status(400).json({ reply: "Invalid request." });
+  if (!message || !userId) {
+    return res.status(400).json({
+      reply: "Message and session required."
+    });
   }
 
-  // Initialize session if new
-  if (!sessions[sessionId]) {
-    sessions[sessionId] = [
+  // Initialize memory for new users
+  if (!memoryStore[userId]) {
+    memoryStore[userId] = [
       { role: "system", content: SYSTEM_PROMPT }
     ];
   }
 
-  const conversation = sessions[sessionId];
-  conversation.push({ role: "user", content: message });
+  // Add user message
+  memoryStore[userId].push({
+    role: "user",
+    content: message
+  });
 
   try {
     const response = await axios.post(
       "https://api.openai.com/v1/responses",
       {
         model: "gpt-4.1-mini",
-        input: conversation
+        input: memoryStore[userId]
       },
       {
         headers: {
@@ -79,30 +92,37 @@ app.post("/chat", async (req, res) => {
       response.data?.output?.[0]?.content?.[0]?.text ||
       "I'm here with you.";
 
+    // Final safety guard
     reply = reply.replace(/chatgpt|openai|gpt/gi, "Tianachat");
 
-    conversation.push({ role: "assistant", content: reply });
+    // Save assistant reply
+    memoryStore[userId].push({
+      role: "assistant",
+      content: reply
+    });
 
-    // Limit memory (privacy + cost)
-    if (conversation.length > 20) {
-      sessions[sessionId] = [
+    // Limit memory for privacy & cost
+    if (memoryStore[userId].length > 20) {
+      memoryStore[userId] = [
         { role: "system", content: SYSTEM_PROMPT },
-        ...conversation.slice(-18)
+        ...memoryStore[userId].slice(-18)
       ];
     }
 
     res.json({ reply });
 
-  } catch (err) {
-    console.error("OpenAI error:", err.response?.data || err.message);
+  } catch (error) {
+    console.error("OpenAI error:", error.response?.data || error.message);
     res.status(500).json({
-      reply: "I'm here with you, but something went wrong."
+      reply: "I’m here with you, but something went wrong. Please try again."
     });
   }
 });
 
-// ===== START SERVER =====
+// ======================================================
+// START SERVER
+// ======================================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Tianachat running on port ${PORT}`);
+  console.log(`🧠 Tianachat running on port ${PORT}`);
 });
